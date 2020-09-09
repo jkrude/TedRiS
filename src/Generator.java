@@ -1,4 +1,7 @@
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -6,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -15,18 +19,30 @@ public class Generator<X, Y> {
   final Deque<Y> allY;
   Deque<Node> looseEnds;
 
-  public Generator(Deque<X> xs, Deque<Y> ys, final List<Constraint<X, Y>> constraints) {
+  public Generator(final Set<X> xs, Deque<Y> ys, final List<Constraint<X, Y>> constraints) {
     looseEnds = new LinkedList<>();
     this.constraints = constraints;
     this.allY = ys;
     // If there is a possible start add a root node
     Map<X, Y> mapping = new HashMap<>();
-    final X topX = xs.pollFirst();
-    Deque<Y> filteredList = filterYsForX(topX, mapping);
-    if (!filteredList.isEmpty()) {
-      Node rootNode = new Node(topX, xs, filteredList, mapping);
+    Deque<X> dequeXs = sortXs(xs);
+    final X topX = dequeXs.pollFirst();
+    Deque<Y> yOptions = filterYsForX(topX, mapping);
+    if (!yOptions.isEmpty()) {
+      Node rootNode = new Node(topX, dequeXs, yOptions, mapping);
       looseEnds.add(rootNode);
     }
+  }
+
+
+  private Deque<X> sortXs(final Set<X> xs){
+    Map<X, Integer> firstOptions = new HashMap<>();
+    for(X x : xs){
+      firstOptions.put(x,filterYsForX(x, Collections.emptyMap()).size());
+    }
+    var sortedList = new ArrayList<>(xs);
+    sortedList.sort(Comparator.comparingInt(firstOptions::get));
+    return new ArrayDeque<>(sortedList);
   }
 
   public boolean hasNext() {
