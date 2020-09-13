@@ -1,3 +1,7 @@
+package Riddles;
+
+import Core.Constraint;
+import Core.Solver;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collections;
@@ -110,7 +114,7 @@ public class SortingHatRiddle {
     @Override
     public boolean test(Founder currX, House selectedY, Map<Founder, House> mappings) {
       if (currX.name != founderA && currX.name != founderB) {
-        return true; // Constraint does not matter.
+        return true; // Abstract.Constraint does not matter.
       } else {
         if (selectedY != opt1 && selectedY != opt2) {
           return false; // It has to be one of the options.

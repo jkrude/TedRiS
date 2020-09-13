@@ -1,3 +1,6 @@
+package Core.Generator;
+
+import Core.Constraint;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,19 +10,19 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 
-public class Generator<X, Y> {
+public class SearchTreeGenerator<X, Y> implements Generator<X, Y> {
 
   final List<Constraint<X, Y>> constraints;
   final Deque<Y> allY;
   Deque<Node> looseEnds;
 
-  public Generator(final Set<X> xs, Deque<Y> ys, final List<Constraint<X, Y>> constraints) {
+  public SearchTreeGenerator(final Set<X> xs, Deque<Y> ys,
+      final List<Constraint<X, Y>> constraints) {
     looseEnds = new LinkedList<>();
     this.constraints = constraints;
     this.allY = ys;
@@ -49,15 +52,12 @@ public class Generator<X, Y> {
     return !looseEnds.isEmpty();
   }
 
-  public Optional<Map<X, Y>> findNextSolution() {
-    if (looseEnds.size() == 0) {
-      throw new NoSuchElementException();
+  @Override
+  public Optional<Map<X, Y>> testNext() {
+    if (looseEnds.isEmpty()) {
+      return Optional.empty();
     } else {
-      Optional<Map<X, Y>> optSolution;
-      do {
-        optSolution = searchFromLooseEnd(looseEnds.pollFirst());
-      } while (optSolution.isEmpty() && !looseEnds.isEmpty());
-      return optSolution;
+      return searchFromLooseEnd(looseEnds.pollFirst());
     }
   }
 
