@@ -1,4 +1,4 @@
-# Ted-Ed Riddle Core.Solver
+# Ted-Ed Riddle core.Solver
 
 
 

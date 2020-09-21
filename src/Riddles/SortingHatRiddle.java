@@ -1,7 +1,7 @@
 package Riddles;
 
-import Core.Constraint;
-import Core.Solver;
+import core.Constraint;
+import core.Solver;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collections;
