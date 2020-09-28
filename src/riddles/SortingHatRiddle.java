@@ -1,4 +1,4 @@
-package Riddles;
+package riddles;
 
 import core.Constraint;
 import core.Solver;
@@ -12,6 +12,13 @@ import java.util.Optional;
 
 public class SortingHatRiddle {
 
+  //https://www.youtube.com/watch?v=auhrB0bSTEo&list=PLJicmE8fK0EiFRt1Hm5a_7SJFaikIFW30&index=53
+
+  /*
+   * Mapping X -> X
+   * Finite options
+   * Number of solutions depending on constraints
+   */
 
   public static void main(String[] args) {
 
@@ -120,7 +127,6 @@ public class SortingHatRiddle {
           return false; // It has to be one of the options.
         } else {
           // It is one of the founders and one of the options is selected.
-
           if (currX.name == founderA) {
             // Possible/True if the other one was not already mapped to the house.
             return isNotMappedTo(founderB, selectedY, mappings);
