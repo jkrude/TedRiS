@@ -25,6 +25,10 @@ public class SearchTree<X, Y> {
         looseEnds = new LinkedList<>();
         this.constraints = constraints;
         this.allY = ys;
+        // null cant be mapped to anything
+        if (xs.isEmpty()) {
+            return;
+        }
         // If there is a possible start add a root node
         Map<X, Y> mapping = new HashMap<>();
         Deque<X> dequeXs = sortXs(xs);
