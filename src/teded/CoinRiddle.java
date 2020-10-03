@@ -1,4 +1,4 @@
-package riddles;
+package teded;
 
 import java.util.ArrayList;
 import java.util.List;

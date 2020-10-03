@@ -1,4 +1,4 @@
-package riddles;
+package teded;
 
 import core.Constraint;
 import core.Solver;
