@@ -1,14 +1,19 @@
 package teded;
 
+import core.ChoosingStrategy;
 import core.Constraint;
-import core.Solver;
+import core.SearchTree;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Queue;
+import java.util.stream.Collectors;
 
 public class SortingHatRiddle {
 
@@ -33,27 +38,15 @@ public class SortingHatRiddle {
         new Founder(Name.TREMENDA, HatColor.BLUE, HatSymbol.SWIRLS))
     );
 
-    List<Constraint<Founder, House>> constraints = List.of(
-        // There cant be more than to founder to one house.
-        (currX, selectedY, mappings) -> Collections.frequency(mappings.values(), selectedY) <= 1,
-        // A founder can only be mapped to one house (not really needed)
-        (currX, selectedY, mappings) -> !mappings.containsKey(currX),
-        // Funflame and Imaginzed share two options
-        new TwoShareTwo(Name.FUNFLAME, Name.IMAGINEZ, House.GIANTEYE, House.LONGMOUS),
-        new TwoShareTwo(Name.MIRACULO, Name.RIMLEBY, House.LONGMOUS, House.MERAMAID),
-        // Same color/symbol are not possible
-        (currX, selectedY, mappings) -> mappings.entrySet().stream()
-            .filter(entry -> entry.getValue() == selectedY)
-            .allMatch(entry -> (currX.hatSymbol != entry.getKey().hatSymbol)
-                && (currX.hatColor != entry.getKey().hatColor)),
-        // Septimus has one choice less
-        (currX, selectedY, mappings) -> currX.name != Name.SEPTIMUS || selectedY != House.VIDOPNIR);
+    SearchTree<Founder, House> searchTree = new SearchTree<>(
+        new HousesForFounderStrategy(),
+        (alreadyMapped) -> alreadyMapped.size() == founders.size(),
+        founders
+    );
+    Optional<List<Entry<Founder, House>>> optSolution = searchTree.testUntilFound();
 
-    Solver<Founder, House> solver = new Solver<>(founders, Arrays.asList(House.values()),
-        constraints);
-    Optional<Map<Founder, House>> optSolution = solver.findOne();
     String output;
-    output = optSolution.isPresent() ? optSolution.toString() : "No solution found";
+    output = optSolution.isPresent() ? optSolution.get().toString() : "No solution found";
     System.out.println(output);
   }
 
@@ -141,6 +134,42 @@ public class SortingHatRiddle {
       return mapping.entrySet().stream()
           .filter(entry -> entry.getKey().name == founderName)
           .allMatch(entry -> entry.getValue() != h);
+    }
+  }
+
+  public static class HousesForFounderStrategy implements ChoosingStrategy<Founder, House> {
+
+    private List<Constraint<Founder, House>> constraints = List.of(
+        // There cant be more than to founder to one house.
+        (currX, selectedY, alreadyMapped) ->
+            Collections.frequency(alreadyMapped.values(), selectedY) <= 1,
+        // A founder can only be mapped to one house (not really needed)
+        (currX, selectedY, mappings) -> !mappings.containsKey(currX),
+        // Funflame and Imaginzed share two options
+        new TwoShareTwo(Name.FUNFLAME, Name.IMAGINEZ, House.GIANTEYE, House.LONGMOUS),
+        new TwoShareTwo(Name.MIRACULO, Name.RIMLEBY, House.LONGMOUS, House.MERAMAID),
+        // Same color/symbol are not possible
+        (currX, selectedY, mappings) -> mappings.entrySet().stream()
+            .filter(entry -> entry.getValue() == selectedY)
+            .allMatch(entry -> (currX.hatSymbol != entry.getKey().hatSymbol)
+                && (currX.hatColor != entry.getKey().hatColor)),
+        // Septimus has one choice less
+        (currX, selectedY, mappings) -> currX.name != Name.SEPTIMUS || selectedY != House.VIDOPNIR);
+
+
+    @Override
+    public Queue<House> sortedOptionsForY(Founder curr, List<Entry<Founder, House>> alreadyMapped,
+        Queue<Founder> toBeMapped) {
+      Map<Founder, House> asMap = interpretAsMap(alreadyMapped);
+      return Arrays.stream(House.values())
+          .filter(y -> constraints.stream().allMatch(c -> c.test(curr, y, asMap)))
+          .collect(Collectors.toCollection(ArrayDeque::new));
+    }
+
+    private Map<Founder, House> interpretAsMap(List<Entry<Founder, House>> alreadyMapped) {
+      Map<Founder, House> map = new HashMap<>();
+      alreadyMapped.forEach(entry -> map.put(entry.getKey(), entry.getValue()));
+      return map;
     }
   }
 }

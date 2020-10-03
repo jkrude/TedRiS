@@ -1,135 +1,118 @@
 package core;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Queue;
+import java.util.function.Predicate;
 
 
 public class SearchTree<X, Y> {
 
-    final List<Constraint<X, Y>> constraints;
-    final Deque<Y> allY;
-    Deque<Node> looseEnds;
+  private Queue<BranchOption> availableBranches;
+  private ChoosingStrategy<X, Y> strategy;
+  private Predicate<List<Entry<X, Y>>> validator;
 
-    public SearchTree(final Set<X> xs, Deque<Y> ys,
-        final List<Constraint<X, Y>> constraints) {
-        looseEnds = new LinkedList<>();
-        this.constraints = constraints;
-        this.allY = ys;
-        // null cant be mapped to anything
-        if (xs.isEmpty()) {
-            return;
-        }
-        // If there is a possible start add a root node
-        Map<X, Y> mapping = new HashMap<>();
-        Deque<X> dequeXs = sortXs(xs);
-        final X topX = dequeXs.pollFirst();
-        Deque<Y> yOptions = filterYsForX(topX, mapping);
-        if (!yOptions.isEmpty()) {
-            Node rootNode = new Node(topX, dequeXs, yOptions, mapping);
-            looseEnds.add(rootNode);
-        }
+  private SearchTree(
+      ChoosingStrategy<X, Y> strategy,
+      Predicate<List<Entry<X, Y>>> solutionValidator) {
+    this.strategy = strategy;
+    this.availableBranches = new ArrayDeque<>();
+    this.validator = solutionValidator;
+  }
+
+  public SearchTree(
+      ChoosingStrategy<X, Y> strategy,
+      Predicate<List<Entry<X, Y>>> solutionValidator,
+      Queue<X> toBeMapped,
+      List<Entry<X, Y>> alreadyMapped) {
+    this(strategy, solutionValidator);
+    init(toBeMapped, alreadyMapped);
+  }
+
+  public SearchTree(
+      ChoosingStrategy<X, Y> strategy,
+      Predicate<List<Entry<X, Y>>> solutionValidator,
+      Queue<X> toBeMapped) {
+    this(strategy, solutionValidator);
+    init(toBeMapped);
+  }
+
+  private void init(Queue<X> toBeMapped) {
+    init(toBeMapped, new ArrayList<>());
+  }
+
+  private void init(Queue<X> toBeMapped, List<Entry<X, Y>> alreadyMapped) {
+    X first = toBeMapped.poll();
+    Queue<Y> optionsForFirstMapping = strategy.sortedOptionsForY(
+        first, alreadyMapped, toBeMapped);
+    for (Y option : optionsForFirstMapping) {
+      availableBranches.add(new BranchOption(first, option, alreadyMapped, toBeMapped));
     }
+  }
 
+  public boolean hasNext() {
+    return !availableBranches.isEmpty();
+  }
 
-    private Deque<X> sortXs(final Set<X> xs) {
-        Map<X, Integer> firstOptions = new HashMap<>();
-        for (X x : xs) {
-            firstOptions.put(x, filterYsForX(x, Collections.emptyMap()).size());
-        }
-        var sortedList = new ArrayList<>(xs);
-        sortedList.sort(Comparator.comparingInt(firstOptions::get));
-        return new ArrayDeque<>(sortedList);
+  public Optional<List<Entry<X, Y>>> testNext() {
+    if (availableBranches.isEmpty()) {
+      return Optional.empty();
+    } else {
+      BranchOption branchOption = availableBranches.poll();
+      return traverseBranch(branchOption.alreadyMapped, branchOption.toBeMapped);
     }
+  }
 
-    public boolean hasNext() {
-        return !looseEnds.isEmpty();
-    }
+  private Optional<List<Entry<X, Y>>> traverseBranch(
+      List<Entry<X, Y>> alreadyMapped,
+      Queue<X> toBeMapped) {
 
-    public Optional<Map<X, Y>> testNext() {
-        if (looseEnds.isEmpty()) {
-            return Optional.empty();
-        } else {
-            return searchFromLooseEnd(looseEnds.pollFirst());
-        }
-    }
-
-    private Optional<Map<X, Y>> searchFromLooseEnd(Node looseEnd) {
-        final X currX = looseEnd.currX;
-        while (!looseEnd.yOptionsForThisX.isEmpty()) {
-            // Explore each option for mappings x->y
-            final Y selectedY = looseEnd.yOptionsForThisX.pollFirst();
-            Map<X, Y> selectedMapping = new HashMap<>(looseEnd.mappings);
-            selectedMapping.put(currX, selectedY);
-            Optional<Map<X, Y>> optSol = exploreBranch(new ArrayDeque<>(looseEnd.toBeMappedXs),
-                selectedMapping);
-            // Test if this branch yields a successful solution
-            if (optSol.isPresent()) {
-                // If there could be more options save them
-                if (!looseEnd.yOptionsForThisX.isEmpty()) {
-                    looseEnds.addFirst(looseEnd);
-                }
-                return optSol;
-            }
-        }
-        // All branches were tested but none yielded a solution
+    while (!toBeMapped.isEmpty()) {
+      if (validator.test(alreadyMapped)) {
+        return Optional.of(alreadyMapped);
+      }
+      X curr = toBeMapped.poll();
+      assert curr != null;
+      Queue<Y> options = strategy.sortedOptionsForY(
+          curr, alreadyMapped, toBeMapped);
+      if (options.isEmpty()) {
         return Optional.empty();
+      }
+      Y bestY = options.poll();
+      if (!options.isEmpty()) {
+        options.forEach(option -> availableBranches.add(
+            new BranchOption(curr, option, alreadyMapped, toBeMapped)));
+      }
+      alreadyMapped.add(new SimpleEntry<>(curr, bestY));
     }
+    return validator.test(alreadyMapped) ? Optional.of(alreadyMapped) : Optional.empty();
+  }
 
-    private Optional<Map<X, Y>> exploreBranch(
-        Deque<X> toBeMapped, Map<X, Y> currentMapping) {
-
-        while (!toBeMapped.isEmpty()) {
-            // Each iteration represents a deeper level in the search-tree
-            final X currX = toBeMapped.pollFirst();
-            Deque<Y> yOptions = filterYsForX(currX, currentMapping);
-            if (yOptions.isEmpty()) {
-                // This branch has no solution
-                return Optional.empty();
-            } else {
-                final Y currY = yOptions.pollFirst();
-                if (!yOptions.isEmpty()) {
-                    // There is more than one option for y in x->y
-                    Node choice = new Node(currX, new ArrayDeque<>(toBeMapped), yOptions,
-                        new HashMap<>(currentMapping));
-                    looseEnds.addFirst(choice);
-                }
-                currentMapping.put(currX, currY);
-            }
-        }
-        // All x were successfully mapped to a y
-        return Optional.of(currentMapping);
+  public Optional<List<Entry<X, Y>>> testUntilFound() {
+    Optional<List<Entry<X, Y>>> optSol = Optional.empty();
+    while (!availableBranches.isEmpty() && optSol.isEmpty()) {
+      BranchOption b = availableBranches.poll();
+      assert b != null;
+      optSol = traverseBranch(b.alreadyMapped, b.toBeMapped);
     }
+    return optSol;
+  }
 
-    private Deque<Y> filterYsForX(X x, Map<X, Y> currentMapping) {
-        return allY.stream()
-            .filter(y -> constraints.stream().allMatch(c -> c.test(x, y, currentMapping)))
-            .collect(Collectors.toCollection(ArrayDeque::new));
+  public class BranchOption {
+
+    List<Entry<X, Y>> alreadyMapped;
+    Queue<X> toBeMapped;
+
+    public BranchOption(final X curr, final Y Y,
+        final List<Entry<X, Y>> alreadyMapped, final Queue<X> toBeMapped) {
+      this.alreadyMapped = new ArrayList<>(alreadyMapped);
+      this.toBeMapped = new ArrayDeque<>(toBeMapped);
+      this.alreadyMapped.add(new SimpleEntry<>(curr, Y));
     }
+  }
 
-    // A node represents options mapping the current x to a y
-    public class Node {
-
-        final X currX; // The current x
-        Deque<Y> yOptionsForThisX; // The options for the current x
-        Deque<X> toBeMappedXs; // The rest of xs that need a mapping
-        Map<X, Y> mappings; // The mappings already done
-
-        public Node(X currX, Deque<X> toBeMappedXs, Deque<Y> yOptionsForThisX, Map<X, Y> mappings) {
-            assert toBeMappedXs.size() + mappings.size() == 7;
-            this.currX = currX;
-            this.toBeMappedXs = toBeMappedXs;
-            this.yOptionsForThisX = yOptionsForThisX;
-            this.mappings = mappings;
-        }
-    }
 }

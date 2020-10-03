@@ -1,5 +1,6 @@
 package entwicklerheld.scaleChallengeHard;
 
+import core.SearchTree;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -16,8 +17,15 @@ import java.util.Queue;
 
 class Scale {
 
-    static Queue<BranchOption> availableBranches = new ArrayDeque<>();
-    static ChoosingStrategy strategy = new ChoosingStrategy();
+    public static void main(String[] args) {
+        // poor test cases emulating the official tests.
+        List<List<Integer>> sol = getMasses(2, Arrays.asList(1, 3, 9, 27, 81, 243));
+        assert sol.get(0).equals(List.of(1));
+        assert sol.get(1).equals(List.of(3));
+
+        sol = getMasses(346, Arrays.asList(1, 3, 9, 27, 81, 243));
+        System.out.println(sol);
+    }
 
     static List<List<Integer>> getMasses(Integer slowLorisWeight, List<Integer> allMasses) {
         // You need to implement this method.
@@ -33,61 +41,20 @@ class Scale {
             }
             return Math.abs(slowLorisWeight - x) < Math.abs(slowLorisWeight - y) ? -1 : 1;
         }*/);
+        Queue<Integer> allMassesQueue = new ArrayDeque<>(allMasses);
         List<Entry<Integer, Choice>> alreadyMapped = new ArrayList<>();
         alreadyMapped.add(new SimpleEntry<>(slowLorisWeight, Choice.Left));
-        Queue<Integer> toBeMapped = new ArrayDeque<>(allMasses);
-        Integer firstMass = toBeMapped.poll();
-        assert firstMass != null;
-        Queue<Choice> optionsForFirstMapping = strategy
-            .sortedOptionsForY(firstMass, alreadyMapped, toBeMapped,
-                Arrays.asList(Choice.values()));
-        for (Choice option : optionsForFirstMapping) {
-            availableBranches.add(new BranchOption(firstMass, option, alreadyMapped, toBeMapped));
-        }
-        Optional<List<Entry<Integer, Choice>>> optSol = checkAllBranches();
+        SearchTree<Integer, Choice> searchTree = new SearchTree<>(new ChoicesForMasses(),
+            Scale::validSolution, allMassesQueue, alreadyMapped);
+        Optional<List<Entry<Integer, Choice>>> optSol = searchTree.testUntilFound();
         if (optSol.isPresent()) {
             List<List<Integer>> solution = interpretMapping(optSol.get());
             solution.get(0).remove(slowLorisWeight);
             return solution;
         } else {
+            // This method is only supposed to be called if a solution exists.
             throw new RuntimeException("No solution found");
         }
-    }
-
-
-    private static Optional<List<Entry<Integer, Choice>>> traverseBranch(
-        List<Entry<Integer, Choice>> alreadyMapped,
-        Queue<Integer> toBeMapped) {
-
-        while (!toBeMapped.isEmpty()) {
-            if (validSolution(alreadyMapped)) {
-                return Optional.of(alreadyMapped);
-            }
-            Integer curr = toBeMapped.poll();
-            assert curr != null;
-            Queue<Choice> options = strategy.sortedOptionsForY(
-                curr, alreadyMapped, toBeMapped, Arrays.asList(Choice.values()));
-            if (options.isEmpty()) {
-                return Optional.empty();
-            }
-            Choice bestChoice = options.poll();
-            if (!options.isEmpty()) {
-                options.forEach(option -> availableBranches.add(
-                    new BranchOption(curr, option, alreadyMapped, toBeMapped)));
-            }
-            alreadyMapped.add(new SimpleEntry<>(curr, bestChoice));
-        }
-        return validSolution(alreadyMapped) ? Optional.of(alreadyMapped) : Optional.empty();
-    }
-
-    private static Optional<List<Entry<Integer, Choice>>> checkAllBranches() {
-        Optional<List<Entry<Integer, Choice>>> optSol = Optional.empty();
-        while (!availableBranches.isEmpty() && optSol.isEmpty()) {
-            BranchOption b = availableBranches.poll();
-            assert b != null;
-            optSol = traverseBranch(b.alreadyMapped, b.toBeMapped);
-        }
-        return optSol;
     }
 
     private static boolean validSolution(List<Entry<Integer, Choice>> alreadyMapped) {
@@ -110,10 +77,7 @@ class Scale {
                     break;
             }
         });
-        List<List<Integer>> leftRight = new ArrayList<>();
-        leftRight.add(leftSide);
-        leftRight.add(rightSide);
-        return leftRight;
+        return Arrays.asList(leftSide, rightSide);
     }
 
     private static int total(List<Integer> list) {
@@ -125,11 +89,13 @@ class Scale {
         Right, Left, Discard
     }
 
-    static class ChoosingStrategy {
+    static class ChoicesForMasses implements core.ChoosingStrategy<Integer, Choice> {
 
-        public Queue<Choice> sortedOptionsForY(Integer curr,
+        @Override
+        public Queue<Choice> sortedOptionsForY(
+            Integer curr,
             List<Entry<Integer, Choice>> alreadyMapped,
-            Queue<Integer> toBeMapped, List<Choice> allPossibleYs) {
+            Queue<Integer> toBeMapped) {
 
             Deque<Choice> options = new ArrayDeque<>();
 
@@ -150,19 +116,6 @@ class Scale {
                 }
             }
             return options;
-        }
-    }
-
-    public static class BranchOption {
-
-        List<Entry<Integer, Choice>> alreadyMapped;
-        Queue<Integer> toBeMapped;
-
-        public BranchOption(final int curr, final Choice choice,
-            final List<Entry<Integer, Choice>> alreadyMapped, final Queue<Integer> toBeMapped) {
-            this.alreadyMapped = new ArrayList<>(alreadyMapped);
-            this.toBeMapped = new ArrayDeque<>(toBeMapped);
-            this.alreadyMapped.add(new SimpleEntry<>(curr, choice));
         }
     }
 

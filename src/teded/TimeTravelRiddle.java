@@ -2,10 +2,10 @@ package teded;
 
 import core.SearchTree;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -35,11 +35,13 @@ public class TimeTravelRiddle {
         addNextNode(graph, 0);
         for (long k = 0; k <= 1000; ++k) {
             if (tryEveryColoring(graph)) {
-                break;
+                System.out.println("Found solution for k=" + (k + 1));
+                ;
+                return;
             }
             addNextNode(graph, k + 1);
         }
-        System.out.println("No Solution found");
+        System.out.println("No solution found");
     }
 
     private static void addNextNode(Set<Node> graph, long k) {
@@ -59,9 +61,11 @@ public class TimeTravelRiddle {
             edges.addAll(node.edges);
         }
         SearchTree<Edge, Color> searchTree = new SearchTree<>(
-            edges,
-            new ArrayDeque<>(Arrays.asList(Color.values())),
-            new ArrayList<>());// no constraints
+            (curr, alreadyMapped, toBeMapped) -> new ArrayDeque<>(Arrays.asList(Color.values())),
+            // no mapping constraints
+            (List<Entry<Edge, Color>> alreadyMapped) -> alreadyMapped.size() == edges.size(),
+            // valid if everything is mapped
+            new ArrayDeque<>(edges));
 
         long triedColoring = 0;
         System.out.println(
@@ -122,11 +126,12 @@ public class TimeTravelRiddle {
         return false;
     }
 
-    private static Set<Node> colorGraph(Set<Node> currGraph, Map<Edge, Color> edgeColorMap) {
+    private static Set<Node> colorGraph(Set<Node> currGraph,
+        List<Entry<Edge, Color>> edgeColorMap) {
         Map<Node, Node> map = new HashMap<>();
         currGraph.forEach(n -> map.put(n, new Node(n.id)));
         Set<Edge> coloredEdges = new HashSet<>();
-        for (Entry<Edge, Color> entry : edgeColorMap.entrySet()) {
+        for (Entry<Edge, Color> entry : edgeColorMap) {
             coloredEdges.add(new Edge(
                 map.get(entry.getKey().x),
                 map.get(entry.getKey().y),
