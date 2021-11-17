@@ -1,233 +1,185 @@
 package teded;
 
-import core.SearchTree;
-import java.util.ArrayDeque;
+import core.BinarySequentialSearch;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Set;
+import util.Pair;
 
 public class TimeTravelRiddle {
 
-    //https://www.youtube.com/watch?v=ukUPojrPFPA&list=PLJicmE8fK0EiFRt1Hm5a_7SJFaikIFW30&index=33
-    /*
-     * Graph problem
-     * infinite options -> partially computable
-     * Only one solution
-     *
-     * 1. The graph is fully connected.
-     * 2. The graph is bi-colored.
-     * 3. The color of an edge is random.
-     * 4. Th graph needs to have a circle of size 3 were every edge has the same color
-     *
-     * 1. Generate fully connected graph with k vertices
-     * 2. Create every possible coloring
-     * 3. If every coloring yields a same-colored-three-circle return Solution
-     */
+  private static int CIRCLE_LENGTH = 3;
 
-    public static void main(String[] args) {
-        // Number of vertices
-        Set<Node> graph = new HashSet<>();
-        addNextNode(graph, 0);
-        for (long k = 0; k <= 1000; ++k) {
-            if (tryEveryColoring(graph)) {
-                System.out.println("Found solution for k=" + (k + 1));
-                ;
-                return;
-            }
-            addNextNode(graph, k + 1);
-        }
-        System.out.println("No solution found");
+  //https://www.youtube.com/watch?v=ukUPojrPFPA&list=PLJicmE8fK0EiFRt1Hm5a_7SJFaikIFW30&index=33
+  /*
+   * Graph problem
+   * infinite options -> partially computable
+   * Only one solution
+   *
+   * 1. The graph is fully connected.
+   * 2. The graph is bi-colored.
+   * 3. The color of an edge is random.
+   * 4. Th graph needs to have a circle of size 3 were every edge has the same color
+   *
+   * 1. Generate fully connected graph with k vertices
+   * 2. Create every possible coloring
+   * 3. If every coloring yields a same-colored-three-circle return Solution
+   */
+
+  public static void main(String[] args) {
+    final int NBR_OF_EXPERIMENTS = (int) 1e3;
+    Long[] measurements = new Long[NBR_OF_EXPERIMENTS];
+    long result = -1;
+    for (int i = 0; i < NBR_OF_EXPERIMENTS; i++) {
+      long startTime = System.currentTimeMillis();
+      result = runExperimentV2(3);
+      long endTime = System.currentTimeMillis();
+      measurements[i] = (endTime - startTime);
+    }
+    double avg = Arrays.stream(measurements).reduce(0L, Long::sum) / (float) NBR_OF_EXPERIMENTS;
+    System.out.println(avg + "ms");
+    System.out.println(result == -1 ? "No solution" : "Solution was: " + result);
+  }
+
+  /*
+   * Version 2:  use boolean cut search tree size in half
+   */
+  private static int runExperimentV2(int circleLength) {
+    // Number of vertices
+    if (CIRCLE_LENGTH < 3) {
+      return -1;
+    }
+    CIRCLE_LENGTH = circleLength;
+    boolean[][] graphMatrix = createMatrixOfSize(4);
+    for (int k = 3; k <= 15; ++k) {
+//        System.out.println("Testing for k= " + graphMatrix.length);
+      if (tryEveryColoring(graphMatrix)) {
+//          System.out.println("Found solution for k=" + (k + 1));
+        return k;
+      }
+      graphMatrix = createMatrixOfSize(k + 1);
+    }
+//    System.out.println("No solution found");
+    return -1;
+  }
+
+
+  private static boolean[][] createMatrixOfSize(int k) {
+    boolean[][] graphMatrix = new boolean[k][k];
+    for (int i = 0; i < k; i++) {
+      graphMatrix[i][i] = false;
+    }
+    return graphMatrix;
+  }
+
+  private static boolean tryEveryColoring(boolean[][] currGraphMatrix) {
+//    System.out.println("Trying for " + currGraphMatrix.length + " nodes");
+    List<Pair<Integer, Integer>> toBeMapped = new ArrayList<>();
+    for (int i = 0; i < currGraphMatrix.length; i++) {
+      for (int j = i + 1; j < currGraphMatrix.length; j++) {
+        toBeMapped.add(new Pair<>(i, j));
+      }
     }
 
-    private static void addNextNode(Set<Node> graph, long k) {
-        Node newNode = new Node(k);
-        for (Node node : graph) {
-            Edge e = new Edge(newNode, node);
-            newNode.edges.add(e);
-            node.edges.add(e);
+    BinarySequentialSearch<Pair<Integer, Integer>> search = new BinarySequentialSearch<>(toBeMapped);
+    boolean[] possibleColoring = new boolean[toBeMapped.size()];
+    long triedColoring = 0;
+
+    while (search.hasNext()) {
+      var possSol = search.tryNext(possibleColoring);
+      if (!isValidSolution(possSol)) {
+        continue;
+      }
+      triedColoring++;
+      var coloredGraph = colorGraph(currGraphMatrix, possSol, toBeMapped);
+      // test circle if false also try inverted graph -> resembles other color
+      if (containsNoCircle(coloredGraph)) {
+        triedColoring++;
+        if (containsNoCircle(invertedGraph(coloredGraph))) {
+          triedColoring++;
+          System.out.println("Tried " + triedColoring + " colorings before false.");
+          System.out.println(Arrays.deepToString(coloredGraph));
+          return false;
         }
-        graph.add(newNode);
+      }
+
     }
 
-    private static boolean tryEveryColoring(Set<Node> graph) {
-        Set<Node> currGraph = new HashSet<>(graph);
-        Set<Edge> edges = new HashSet<>();
-        for (Node node : graph) {
-            edges.addAll(node.edges);
-        }
-        SearchTree<Edge, Color> searchTree = new SearchTree<>(
-            (curr, alreadyMapped, toBeMapped) -> new ArrayDeque<>(Arrays.asList(Color.values())),
-            // no mapping constraints
-            (List<Entry<Edge, Color>> alreadyMapped) -> alreadyMapped.size() == edges.size(),
-            // valid if everything is mapped
-            new ArrayDeque<>(edges));
+    System.out.println("Tried " + triedColoring + " all true.");
+    return true;
+  }
 
-        long triedColoring = 0;
-        System.out.println(
-            "Nodes = " + graph.size() + ", Edges: " + edges.size() + ", Testing max: " + Math
-                .pow(2.0, edges.size()));
-        while (searchTree.hasNext()) {
-            var sol = searchTree.testNext();
-            if (sol.isPresent()) {
-                triedColoring++;
-                var coloredGraph = colorGraph(currGraph, sol.get());
-                if (!testColoring(coloredGraph)) {
-                    System.out.println("Tried " + triedColoring + " colorings before false.");
-                    return false;
-                }
-            }
+  private static boolean isValidSolution(boolean[] possibleSolution) {
+    int count = 0;
+    for (int i = 0; i < possibleSolution.length; i++) {
+      count += possibleSolution[0] ? 1 : 0;
+    }
+    return count <= (possibleSolution.length + 1) / 2;
+  }
+
+  private static boolean[][] colorGraph(boolean[][] currGraphMatrix, boolean[] choices,
+      List<Pair<Integer, Integer>> pairs) {
+    if (choices.length != pairs.size()) {
+      throw new AssertionError();
+    }
+    for (int i = 0; i < pairs.size(); i++) {
+      currGraphMatrix[pairs.get(i).getX()][pairs.get(i).getY()] = choices[i];
+      currGraphMatrix[pairs.get(i).getY()][pairs.get(i).getX()] = choices[i];
+    }
+    return currGraphMatrix;
+  }
+
+  private static boolean[][] invertedGraph(boolean[][] graphMatrix) {
+    boolean[][] inverted = new boolean[graphMatrix.length][graphMatrix.length];
+    for (int i = 0; i < graphMatrix.length; i++) {
+      for (int j = 0; j < graphMatrix.length; j++) {
+        inverted[i][j] = i != j && !graphMatrix[i][j];
+      }
+    }
+    return inverted;
+  }
+
+  private static boolean containsNoCircle(boolean[][] graphMatrix) {
+    return containsNoCircle(graphMatrix, false);
+  }
+
+  private static boolean containsNoCircle(boolean[][] graphMatrix, boolean inverted) {
+    for (int i = 0; i < graphMatrix.length; i++) {
+      for (int j = 0; j < graphMatrix.length; j++) {
+        if (graphMatrix[i][j] ^ inverted) {
+          List<Integer> path = new ArrayList<>(CIRCLE_LENGTH * 2);
+          path.add(i);
+          path.add(j);
+          boolean result = testForCircleRecursive(graphMatrix, path, inverted);
+          if (result) {
+            return false;
+          }
         }
-        System.out.println("Tried " + triedColoring + " all true.");
-        return triedColoring > 0;
+      }
+    }
+    return true;
+  }
+
+  private static boolean testForCircleRecursive(boolean[][] graphMatrix, List<Integer> path, boolean inverted) {
+    assert CIRCLE_LENGTH >= 1;
+    assert path.size() <= CIRCLE_LENGTH;
+    assert path.size() >= 1;
+
+    int lastVisitedNode = path.get(path.size() - 1);
+    if (path.size() == CIRCLE_LENGTH) {
+      return graphMatrix[lastVisitedNode][path.get(0)];
     }
 
-    private static boolean testColoring(Set<Node> coloredGraph) {
-        for (Node node : coloredGraph) {
-            boolean foundTriangle;
-            for (Edge edge : node.edges) {
-                Node end = edge.x.equals(node) ? edge.y : edge.x;
-                foundTriangle =
-                    searchRecursiveSameColorTriangle(edge.color, node, new HashSet<>(), end, 1);
-                if (foundTriangle) {
-                    return true;
-                }
-            }
+    for (int i = 0; i < graphMatrix.length; ++i) {
+      if ((graphMatrix[lastVisitedNode][i] ^ inverted) && !path.contains(i)) {
+        List<Integer> nextPath = new ArrayList<>(path);
+        nextPath.add(i);
+        var result = testForCircleRecursive(graphMatrix, nextPath, inverted);
+        if (result) {
+          return true; // otherwise continue with next i
         }
-        return false;
+      }
     }
-
-    private static boolean searchRecursiveSameColorTriangle(
-        final Color currColor, final Node start,
-        final Set<Node> visited, final Node curr, long lengthOfPath) {
-        for (Edge e : curr.edges) {
-            Node end = e.x.equals(curr) ? e.y : e.x;
-            assert e.color != null;
-            if (e.color == currColor) {
-                if (end.equals(start)) {
-                    if (lengthOfPath + 1 == 3) { // +1 for current path
-                        return true;
-                    }
-                } else if (!visited.contains(end) && lengthOfPath + 1 < 3) {
-                    Set<Node> visitedNext = new HashSet<>(visited);
-                    visitedNext.add(curr);
-                    boolean pathHadTriangle = searchRecursiveSameColorTriangle(
-                        currColor, start, visitedNext, end, lengthOfPath + 1);
-                    if (pathHadTriangle) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private static Set<Node> colorGraph(Set<Node> currGraph,
-        List<Entry<Edge, Color>> edgeColorMap) {
-        Map<Node, Node> map = new HashMap<>();
-        currGraph.forEach(n -> map.put(n, new Node(n.id)));
-        Set<Edge> coloredEdges = new HashSet<>();
-        for (Entry<Edge, Color> entry : edgeColorMap) {
-            coloredEdges.add(new Edge(
-                map.get(entry.getKey().x),
-                map.get(entry.getKey().y),
-                entry.getValue()));
-        }
-        for (Edge e : coloredEdges) {
-            map.get(e.x).edges.add(e);
-            map.get(e.y).edges.add(e);
-        }
-        return new HashSet<>(map.values());
-    }
-
-    private enum Color {
-        RED,
-        BLUE
-    }
-
-    private static class Edge {
-
-        final Node x;
-        final Node y;
-        Color color;
-
-        public Edge(final Node x, final Node y) {
-            this.x = x;
-            this.y = y;
-        }
-
-        public Edge(final Node x, final Node y, Color color) {
-            this.x = x;
-            this.y = y;
-            this.color = color;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            Edge edge = (Edge) o;
-            return x.equals(edge.x) &&
-                y.equals(edge.y) &&
-                color == edge.color;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(x, y, color);
-        }
-
-        @Override
-        public String toString() {
-            return "Edge{" +
-                x +
-                " <->" +
-                y +
-                ", color=" + color +
-                '}';
-        }
-    }
-
-    private static class Node {
-
-        long id;
-        Set<Edge> edges;
-
-        public Node(long id) {
-            this.id = id;
-            this.edges = new HashSet<>();
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            Node node = (Node) o;
-            return id == node.id;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(id);
-        }
-
-        @Override
-        public String toString() {
-            return "Node{" +
-                "id=" + id +
-                '}';
-        }
-    }
+    return false;
+  }
 }
