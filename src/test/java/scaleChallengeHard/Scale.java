@@ -1,4 +1,4 @@
-package entwicklerheld.scaleChallengeHard;
+package scaleChallengeHard;
 
 import core.SearchTree;
 import java.util.AbstractMap.SimpleEntry;

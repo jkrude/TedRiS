@@ -2,25 +2,25 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns="http://maven.apache.org/POM/4.0.0"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <artifactId>QuizSolver</artifactId>
+    <artifactId>QuizSolver</artifactId>
 
-  <dependencies>
-    <dependency>
-      <artifactId>combinatoricslib3</artifactId>
-      <groupId>com.github.dpaukov</groupId>
-      <version>3.3.0</version>
-    </dependency>
+    <dependencies>
+        <dependency>
+            <artifactId>combinatoricslib3</artifactId>
+            <groupId>com.github.dpaukov</groupId>
+            <version>3.3.0</version>
+        </dependency>
 
-  </dependencies>
-  <groupId>groupId</groupId>
-  <modelVersion>4.0.0</modelVersion>
+    </dependencies>
+    <groupId>groupId</groupId>
+    <modelVersion>4.0.0</modelVersion>
 
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-  </properties>
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+    </properties>
 
-  <version>1.0-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
 
 
 </project>
