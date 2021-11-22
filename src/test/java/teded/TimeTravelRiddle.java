@@ -4,6 +4,7 @@ import core.BinarySequentialSearch;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.paukov.combinatorics3.Generator;
 import util.Pair;
 
 public class TimeTravelRiddle {
@@ -27,19 +28,46 @@ public class TimeTravelRiddle {
    */
 
   public static void main(String[] args) {
-    final int NBR_OF_EXPERIMENTS = (int) 1e3;
-    Long[] measurements = new Long[NBR_OF_EXPERIMENTS];
-    long result = -1;
-    for (int i = 0; i < NBR_OF_EXPERIMENTS; i++) {
+    measure(() -> tryAllWithXEdges(createMatrixOfSize(9), 21), 1);
+  }
+
+  public static void measure(Runnable toBeMeasured, int executionTimes) {
+    Long[] measurements = new Long[executionTimes];
+    for (int i = 0; i < executionTimes; i++) {
       long startTime = System.currentTimeMillis();
-      result = runExperimentV2(3);
+      toBeMeasured.run();
       long endTime = System.currentTimeMillis();
       measurements[i] = (endTime - startTime);
     }
-    double avg = Arrays.stream(measurements).reduce(0L, Long::sum) / (float) NBR_OF_EXPERIMENTS;
+    double avg = Arrays.stream(measurements).reduce(0L, Long::sum) / (float) executionTimes;
     System.out.println(avg + "ms");
-    System.out.println(result == -1 ? "No solution" : "Solution was: " + result);
   }
+
+
+  public static boolean tryAllWithXEdges(boolean[][] currGraphMatrix, int edges) {
+    List<Pair<Integer, Integer>> toBeMapped = new ArrayList<>();
+    for (int i = 0; i < currGraphMatrix.length; i++) {
+      for (int j = i + 1; j < currGraphMatrix.length; j++) {
+        toBeMapped.add(new Pair<>(i, j));
+      }
+    }
+    long counter = 0;
+    long startTime = System.currentTimeMillis();
+    for (List<Pair<Integer, Integer>> opt : Generator.combination(toBeMapped).simple(edges)) {
+      var coloredGraph = colorGraph(currGraphMatrix, opt);
+      if (containsNoCircle(coloredGraph)) {
+        System.out.println("Found one without cycle: " + Arrays.deepToString(coloredGraph));
+        return false;
+      }
+      counter++;
+      if (counter % 1000000000 == 0) {
+        System.out.println("Reached " + counter + "in " + (System.currentTimeMillis() - startTime));
+      }
+    }
+    System.out.println("All possibilities had a cycle");
+    return true;
+  }
+
 
   /*
    * Version 2:  use boolean cut search tree size in half
@@ -115,6 +143,18 @@ public class TimeTravelRiddle {
       count += possibleSolution[0] ? 1 : 0;
     }
     return count <= (possibleSolution.length + 1) / 2;
+  }
+
+  private static boolean[][] colorGraph(boolean[][] currGraphMatrix,
+      List<Pair<Integer, Integer>> edges) {
+    for (var row : currGraphMatrix) {
+      Arrays.fill(row, false);
+    }
+    for (Pair<Integer, Integer> edge : edges) {
+      currGraphMatrix[edge.getX()][edge.getY()] = true;
+      currGraphMatrix[edge.getY()][edge.getX()] = true;
+    }
+    return currGraphMatrix;
   }
 
   private static boolean[][] colorGraph(boolean[][] currGraphMatrix, boolean[] choices,

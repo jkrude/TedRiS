@@ -41,13 +41,8 @@ public class BinarySequentialSearch<X> {
   private boolean[] extractFromState(boolean[] toBeFilled) {
     String asBString = Long.toBinaryString(this.state);
     asBString = "0".repeat(this.toBeMapped.size() - asBString.length()) + asBString;
-    return foo(asBString, toBeFilled);
-  }
-
-  private boolean[] foo(String binaryString, boolean[] toBeFilled) {
-
-    for (int i = 0; i < binaryString.length(); i++) {
-      toBeFilled[i] = binaryString.charAt(i) != '0';
+    for (int i = 0; i < asBString.length(); i++) {
+      toBeFilled[i] = asBString.charAt(i) != '0';
     }
     return toBeFilled;
   }

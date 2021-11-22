@@ -33,7 +33,7 @@ let $k$ be the number of vertices in $G$ and $C$ the size of the searched circle
 | 4             | 27.82     | 100        | 6             | 40 752                  |
 | 5             | -         | -          | Out of Memory | 268.435.456             |
 
-Adding a choosing strategy to reduces the number of tried colorings
+Adding a choosing strategy to reduces the number of tried coloring-options
 
 | Circle Size C | Time (ms) | Iterations | Solution      | Max Size of Search tree |
 | ------------- | --------- | ---------- | ------------- | ----------------------- |
@@ -56,10 +56,26 @@ Adding a choosing strategy to reduces the number of tried colorings
 ```
 
 - using one array for all Search-Results was 82% more efficient | Circle Size C | Time (ms) | Iterations | Solution |
-  Max Size of Search tree | | ------------- | --------- | ---------- | -------- | ----------------------- | | 3 | 6.469
-  | 1 000 | 6 | 20 184 | | 4 | 12.818 | 1 000 | 6 | 21 580 | | 5 | | 1 | > 8 | > 68 000 000 000 |
+  Max Size of Search tree | | ------------- | --------- | ---------- | -------- | ----------------------- | | 3 | 6.469|
+  1 000 | 6 | 20 184 | | 4 | 12.818 | 1 000 | 6 | 21 580 | | 5 | | 1 | > 8 | > 68 000 000 000 |
 
 - Search-Space for $k=8$: 16 974 025
   - over 100 It took 20590ms until $k=8$ was discarded
 - No solution up to `state = 17 677 804 469` took over 3h
 - Coloring graph takes really long (38%)
+
+#### Cutting down the numbers
+
+- Let $k$ be the number of nodes
+
+- Let $v$ be the number of edges = $k^2 - k \over 2$
+
+- If all graphs with $k$ nodes and $x$ edges have a cycle of length $c$
+  - then all graphs with $x+1$ edges have a cycle of length $c$
+  - therefore for all graphs with $k - x\geq$ nodes the inverse has a cycle
+
+- For 18,19 and 20 of 36 edges there is an instance which has no circle$=5$
+
+  - All Graphs with $9$ nodes and $21$ edges have a cycle of length $5$
+
+    → This eliminates 56 994 458 000 possible coloring-options ($\geq 22$ edges)
