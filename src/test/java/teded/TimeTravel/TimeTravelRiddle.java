@@ -1,15 +1,15 @@
-package teded;
+package teded.TimeTravel;
 
-import core.BinarySequentialSearch;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.paukov.combinatorics3.Generator;
 import util.Pair;
 
+@SuppressWarnings("SameParameterValue")
 public class TimeTravelRiddle {
 
-  private static int CIRCLE_LENGTH = 3;
+  private static final int CIRCLE_LENGTH = 3;
 
   //https://www.youtube.com/watch?v=ukUPojrPFPA&list=PLJicmE8fK0EiFRt1Hm5a_7SJFaikIFW30&index=33
   /*
@@ -28,10 +28,12 @@ public class TimeTravelRiddle {
    */
 
   public static void main(String[] args) {
-    measure(() -> tryAllWithXEdges(createMatrixOfSize(9), 21), 1);
+    measure(() -> runExperimentV2(5), 100);
+//    measure(() -> runExperimentV2(5, 1), 10);
+
   }
 
-  public static void measure(Runnable toBeMeasured, int executionTimes) {
+  static void measure(Runnable toBeMeasured, int executionTimes) {
     Long[] measurements = new Long[executionTimes];
     for (int i = 0; i < executionTimes; i++) {
       long startTime = System.currentTimeMillis();
@@ -44,7 +46,7 @@ public class TimeTravelRiddle {
   }
 
 
-  public static boolean tryAllWithXEdges(boolean[][] currGraphMatrix, int edges) {
+  static boolean tryAllWithXEdges(boolean[][] currGraphMatrix, int edges) {
     List<Pair<Integer, Integer>> toBeMapped = new ArrayList<>();
     for (int i = 0; i < currGraphMatrix.length; i++) {
       for (int j = i + 1; j < currGraphMatrix.length; j++) {
@@ -72,27 +74,47 @@ public class TimeTravelRiddle {
   /*
    * Version 2:  use boolean cut search tree size in half
    */
-  private static int runExperimentV2(int circleLength) {
+  static int runExperimentV2(int circleLength) {
+    return runExperimentV2(circleLength, Runtime.getRuntime().availableProcessors());
+  }
+
+  static int runExperimentV2(int circleLength, int numOfProcessors) {
     // Number of vertices
-    if (CIRCLE_LENGTH < 3) {
-      return -1;
+    if (circleLength < 3) {
+      throw new IllegalArgumentException("Circle has to be of length 3 or more");
     }
-    CIRCLE_LENGTH = circleLength;
-    boolean[][] graphMatrix = createMatrixOfSize(4);
-    for (int k = 3; k <= 15; ++k) {
+    for (int k = 8; k <= 8; ++k) {
 //        System.out.println("Testing for k= " + graphMatrix.length);
-      if (tryEveryColoring(graphMatrix)) {
-//          System.out.println("Found solution for k=" + (k + 1));
+      int searchSpace = (int) Math.pow(2, (k * k - k) / 2f);
+      int sizePerP = (int) Math.ceil(searchSpace / (float) numOfProcessors);
+//      System.out.println("P = " + numOfProcessors);
+//      System.out.println("Partition size = " + sizePerP);
+      SearchThread[] threads = new SearchThread[numOfProcessors];
+      SearchCallback callback = new SearchCallback(threads);
+      for (int i = 0; i < numOfProcessors; i++) {
+        threads[i] = new SearchThread(circleLength, k, i * sizePerP, searchSpace, callback);
+      }
+
+      for (SearchThread thread : threads) {
+        thread.start();
+      }
+      for (Thread thread : threads) {
+        try {
+          thread.join();
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
+      if (callback.allGraphsHadCycles()) {
         return k;
       }
-      graphMatrix = createMatrixOfSize(k + 1);
     }
 //    System.out.println("No solution found");
     return -1;
   }
 
 
-  private static boolean[][] createMatrixOfSize(int k) {
+  static boolean[][] createMatrixOfSize(int k) {
     boolean[][] graphMatrix = new boolean[k][k];
     for (int i = 0; i < k; i++) {
       graphMatrix[i][i] = false;
@@ -100,44 +122,17 @@ public class TimeTravelRiddle {
     return graphMatrix;
   }
 
-  private static boolean tryEveryColoring(boolean[][] currGraphMatrix) {
-//    System.out.println("Trying for " + currGraphMatrix.length + " nodes");
+  static List<Pair<Integer, Integer>> toBeMapped(int k) {
     List<Pair<Integer, Integer>> toBeMapped = new ArrayList<>();
-    for (int i = 0; i < currGraphMatrix.length; i++) {
-      for (int j = i + 1; j < currGraphMatrix.length; j++) {
+    for (int i = 0; i < k; i++) {
+      for (int j = i + 1; j < k; j++) {
         toBeMapped.add(new Pair<>(i, j));
       }
     }
-
-    BinarySequentialSearch<Pair<Integer, Integer>> search = new BinarySequentialSearch<>(toBeMapped);
-    boolean[] possibleColoring = new boolean[toBeMapped.size()];
-    long triedColoring = 0;
-
-    while (search.hasNext()) {
-      var possSol = search.tryNext(possibleColoring);
-      if (!isValidSolution(possSol)) {
-        continue;
-      }
-      triedColoring++;
-      var coloredGraph = colorGraph(currGraphMatrix, possSol, toBeMapped);
-      // test circle if false also try inverted graph -> resembles other color
-      if (containsNoCircle(coloredGraph)) {
-        triedColoring++;
-        if (containsNoCircle(invertedGraph(coloredGraph))) {
-          triedColoring++;
-          System.out.println("Tried " + triedColoring + " colorings before false.");
-          System.out.println(Arrays.deepToString(coloredGraph));
-          return false;
-        }
-      }
-
-    }
-
-    System.out.println("Tried " + triedColoring + " all true.");
-    return true;
+    return toBeMapped;
   }
 
-  private static boolean isValidSolution(boolean[] possibleSolution) {
+  static boolean isValidSolution(boolean[] possibleSolution) {
     int count = 0;
     for (int i = 0; i < possibleSolution.length; i++) {
       count += possibleSolution[0] ? 1 : 0;
@@ -145,7 +140,7 @@ public class TimeTravelRiddle {
     return count <= (possibleSolution.length + 1) / 2;
   }
 
-  private static boolean[][] colorGraph(boolean[][] currGraphMatrix,
+  static boolean[][] colorGraph(boolean[][] currGraphMatrix,
       List<Pair<Integer, Integer>> edges) {
     for (var row : currGraphMatrix) {
       Arrays.fill(row, false);
@@ -157,7 +152,7 @@ public class TimeTravelRiddle {
     return currGraphMatrix;
   }
 
-  private static boolean[][] colorGraph(boolean[][] currGraphMatrix, boolean[] choices,
+  static boolean[][] colorGraph(boolean[][] currGraphMatrix, boolean[] choices,
       List<Pair<Integer, Integer>> pairs) {
     if (choices.length != pairs.size()) {
       throw new AssertionError();
@@ -169,7 +164,7 @@ public class TimeTravelRiddle {
     return currGraphMatrix;
   }
 
-  private static boolean[][] invertedGraph(boolean[][] graphMatrix) {
+  static boolean[][] invertedGraph(boolean[][] graphMatrix) {
     boolean[][] inverted = new boolean[graphMatrix.length][graphMatrix.length];
     for (int i = 0; i < graphMatrix.length; i++) {
       for (int j = 0; j < graphMatrix.length; j++) {
@@ -179,11 +174,11 @@ public class TimeTravelRiddle {
     return inverted;
   }
 
-  private static boolean containsNoCircle(boolean[][] graphMatrix) {
+  static boolean containsNoCircle(boolean[][] graphMatrix) {
     return containsNoCircle(graphMatrix, false);
   }
 
-  private static boolean containsNoCircle(boolean[][] graphMatrix, boolean inverted) {
+  static boolean containsNoCircle(boolean[][] graphMatrix, boolean inverted) {
     for (int i = 0; i < graphMatrix.length; i++) {
       for (int j = 0; j < graphMatrix.length; j++) {
         if (graphMatrix[i][j] ^ inverted) {
@@ -200,7 +195,7 @@ public class TimeTravelRiddle {
     return true;
   }
 
-  private static boolean testForCircleRecursive(boolean[][] graphMatrix, List<Integer> path, boolean inverted) {
+  static boolean testForCircleRecursive(boolean[][] graphMatrix, List<Integer> path, boolean inverted) {
     assert CIRCLE_LENGTH >= 1;
     assert path.size() <= CIRCLE_LENGTH;
     assert path.size() >= 1;
@@ -222,4 +217,44 @@ public class TimeTravelRiddle {
     }
     return false;
   }
+
+
+  static class SearchCallback {
+
+    public final boolean print;
+    private final SearchThread[] threads;
+    private boolean allGraphsHadCycles;
+
+    SearchCallback(SearchThread[] threads) {
+      this(threads, false);
+    }
+
+    SearchCallback(SearchThread[] threads, boolean print) {
+      this.threads = threads;
+      this.allGraphsHadCycles = true;
+      this.print = print;
+    }
+
+    synchronized void reportResult(boolean[][] graph, long triedGraphs) {
+      for (SearchThread thread : this.threads) {
+        thread.interrupt();
+      }
+      this.allGraphsHadCycles = false;
+      if (this.print) {
+        System.out.println("After " + triedGraphs + " iterations, found instance without cycle: ");
+        System.out.println(Arrays.deepToString(graph));
+      }
+    }
+
+    synchronized void reportResult(long triedGraphs) {
+      if (this.print) {
+        System.out.println("All graphs had cycles. Tested: " + triedGraphs);
+      }
+    }
+
+    public boolean allGraphsHadCycles() {
+      return this.allGraphsHadCycles;
+    }
+  }
+
 }

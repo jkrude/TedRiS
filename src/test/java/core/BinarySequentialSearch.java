@@ -14,9 +14,13 @@ public class BinarySequentialSearch<X> {
   }
 
   public BinarySequentialSearch(List<X> toBeMapped, long initialSize) {
+    this(toBeMapped, initialSize, (long) Math.pow(2, toBeMapped.size()));
+  }
+
+  public BinarySequentialSearch(List<X> toBeMapped, long initialSize, long max) {
     this.toBeMapped = toBeMapped;
     this.state = initialSize;
-    this.max = (long) Math.pow(2, toBeMapped.size());
+    this.max = max;
 //    System.out.println("Search-Space <= " + max);
   }
 

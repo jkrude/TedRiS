@@ -60,9 +60,11 @@ Adding a choosing strategy to reduces the number of tried coloring-options
   1 000 | 6 | 20 184 | | 4 | 12.818 | 1 000 | 6 | 21 580 | | 5 | | 1 | > 8 | > 68 000 000 000 |
 
 - Search-Space for $k=8$: 16 974 025
-  - over 100 It took 20590ms until $k=8$ was discarded
+  - over 100 It took 20 590ms until $k=8$ was discarded
 - No solution up to `state = 17 677 804 469` took over 3h
 - Coloring graph takes really long (38%)
+
+
 
 #### Cutting down the numbers
 
@@ -79,3 +81,16 @@ Adding a choosing strategy to reduces the number of tried coloring-options
   - All Graphs with $9$ nodes and $21$ edges have a cycle of length $5$
 
     → This eliminates 56 994 458 000 possible coloring-options ($\geq 22$ edges)
+
+#### Parallel
+
+- partition $1\dots2^{|V|}$ into `numOfThreads` parts
+- Each thread tests only graphs that correspond to encoding of $n \in$ partition
+  - report to callback if instance without cycle was found
+  - if that was the case callback will close all threads
+- This is repeated for each $k$
+
+| Iterations | Number of Graphs | P=1: Time (ms) | P=16: Time           | SPeedup |
+| ---------- | ---------------- | -------------- | -------------------- | ------- |
+| 10         | 270 566 472      | 17 971         | 176.24 (by 100-1000) | 78.47   |
+|            |                  |                |                      |         |
