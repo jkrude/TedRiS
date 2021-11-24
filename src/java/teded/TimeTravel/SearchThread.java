@@ -2,11 +2,9 @@ package teded.TimeTravel;
 
 import static teded.TimeTravel.TimeTravelRiddle.colorGraph;
 import static teded.TimeTravel.TimeTravelRiddle.createMatrixOfSize;
-import static teded.TimeTravel.TimeTravelRiddle.invertedGraph;
 import static teded.TimeTravel.TimeTravelRiddle.toBeMapped;
 
 import core.BinarySequentialSearch;
-import java.util.ArrayList;
 import java.util.List;
 import teded.TimeTravel.TimeTravelRiddle.SearchCallback;
 import util.Pair;
@@ -14,7 +12,7 @@ import util.Pair;
 
 class SearchThread extends Thread {
 
-  private final int Cycle_LENGTH;
+  private final int CYCLE_LENGTH;
   private final boolean[][] graph;
   private final int initialState;
   private final int max;
@@ -22,11 +20,20 @@ class SearchThread extends Thread {
 
   public SearchThread(int cycleLength, int numNode, int initialState, int max,
       SearchCallback callback) {
-    this.Cycle_LENGTH = cycleLength;
+    this.CYCLE_LENGTH = cycleLength;
     this.max = max;
     this.graph = createMatrixOfSize(numNode);
     this.initialState = initialState;
     this.callback = callback;
+  }
+
+  private static boolean contains(int[] arr, int searched) {
+    for (int i : arr) {
+      if (i == searched) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -44,7 +51,7 @@ class SearchThread extends Thread {
       // test circle if false also try inverted graph -> resembles other color
       if (hasNoCircle(coloredGraph, false)) {
         triedColoring++;
-        if (hasNoCircle(invertedGraph(coloredGraph), false)) {
+        if (hasNoCircle(coloredGraph, true)) {
           triedColoring++;
           this.callback.reportResult(graph, triedColoring);
           return;
@@ -59,11 +66,11 @@ class SearchThread extends Thread {
   private boolean hasNoCircle(boolean[][] graphMatrix, boolean inverted) {
     for (int i = 0; i < graphMatrix.length; i++) {
       for (int j = 0; j < graphMatrix.length; j++) {
-        if (graphMatrix[i][j] ^ inverted) {
-          List<Integer> path = new ArrayList<>(this.Cycle_LENGTH);
-          path.add(i);
-          path.add(j);
-          boolean result = hasCircleRec(graphMatrix, path, inverted);
+        if (i != j && (graphMatrix[i][j] ^ inverted)) {
+          int[] path = new int[this.CYCLE_LENGTH];
+          path[0] = i;
+          path[1] = j;
+          boolean result = hasCircleRec(graphMatrix, path, inverted, 2);
           if (result) {
             return false;
           }
@@ -73,18 +80,17 @@ class SearchThread extends Thread {
     return true;
   }
 
-  private boolean hasCircleRec(boolean[][] graphMatrix, List<Integer> path, boolean inverted) {
+  private boolean hasCircleRec(boolean[][] graphMatrix, int[] path, boolean inverted, int size) {
 
-    int lastVisitedNode = path.get(path.size() - 1);
-    if (path.size() == this.Cycle_LENGTH) {
-      return graphMatrix[lastVisitedNode][path.get(0)];
+    int lastVisitedNode = path[size - 1];
+    if (size == this.CYCLE_LENGTH) {
+      return graphMatrix[lastVisitedNode][path[0]] ^ inverted;
     }
 
     for (int i = 0; i < graphMatrix.length; ++i) {
-      if ((graphMatrix[lastVisitedNode][i] ^ inverted) && !path.contains(i)) {
-        List<Integer> nextPath = new ArrayList<>(path);
-        nextPath.add(i);
-        var result = hasCircleRec(graphMatrix, nextPath, inverted);
+      if (i != lastVisitedNode && (graphMatrix[lastVisitedNode][i] ^ inverted) && !contains(path, i)) {
+        path[size] = i;
+        var result = hasCircleRec(graphMatrix, path, inverted, size + 1);
         if (result) {
           return true; // otherwise continue with next i
         }
@@ -92,5 +98,4 @@ class SearchThread extends Thread {
     }
     return false;
   }
-
 }

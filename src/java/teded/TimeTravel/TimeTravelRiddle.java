@@ -28,7 +28,7 @@ public class TimeTravelRiddle {
    */
 
   public static void main(String[] args) {
-    measure(() -> runExperimentV2(5), 100);
+    measure(() -> runExperimentV2(5, true), 1);
 //    measure(() -> runExperimentV2(5, 1), 10);
 
   }
@@ -70,27 +70,31 @@ public class TimeTravelRiddle {
     return true;
   }
 
-
   /*
    * Version 2:  use boolean cut search tree size in half
    */
   static int runExperimentV2(int circleLength) {
-    return runExperimentV2(circleLength, Runtime.getRuntime().availableProcessors());
+    return runExperimentV2(circleLength, Runtime.getRuntime().availableProcessors(), false);
   }
 
-  static int runExperimentV2(int circleLength, int numOfProcessors) {
+  static int runExperimentV2(int circleLength, boolean print) {
+    return runExperimentV2(circleLength, Runtime.getRuntime().availableProcessors(), print);
+
+  }
+
+  static int runExperimentV2(int circleLength, int numOfProcessors, boolean print) {
     // Number of vertices
     if (circleLength < 3) {
       throw new IllegalArgumentException("Circle has to be of length 3 or more");
     }
-    for (int k = 8; k <= 8; ++k) {
+    for (int k = 3; k <= 8; ++k) {
 //        System.out.println("Testing for k= " + graphMatrix.length);
       int searchSpace = (int) Math.pow(2, (k * k - k) / 2f);
       int sizePerP = (int) Math.ceil(searchSpace / (float) numOfProcessors);
 //      System.out.println("P = " + numOfProcessors);
 //      System.out.println("Partition size = " + sizePerP);
       SearchThread[] threads = new SearchThread[numOfProcessors];
-      SearchCallback callback = new SearchCallback(threads);
+      SearchCallback callback = new SearchCallback(threads, print);
       for (int i = 0; i < numOfProcessors; i++) {
         threads[i] = new SearchThread(circleLength, k, i * sizePerP, searchSpace, callback);
       }

@@ -89,8 +89,10 @@ Adding a choosing strategy to reduces the number of tried coloring-options
   - report to callback if instance without cycle was found
   - if that was the case callback will close all threads
 - This is repeated for each $k$
+- **Problem**: unbalanced load → the more edges the more instances
+  - partitions should be distributed by resulting graph instances / number of edges
 
-| Iterations | Number of Graphs | P=1: Time (ms) | P=16: Time           | SPeedup |
-| ---------- | ---------------- | -------------- | -------------------- | ------- |
-| 10         | 270 566 472      | 17 971         | 176.24 (by 100-1000) | 78.47   |
-|            |                  |                |                      |         |
+| Iterations | Number of Graphs | P=1: Time (ms)   | P=16: Time           | SPeedup |
+| ---------- | ---------------- | ---------------- | -------------------- | ------- |
+| 10         | 270 566 472      | 17 971           | 176.24 (by 100-1000) | 78.47   |
+| 100        | 16 974 025       | 20 590 (from 3.) |                      |         |

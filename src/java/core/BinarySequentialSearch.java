@@ -13,13 +13,13 @@ public class BinarySequentialSearch<X> {
     this(toBeMapped, 0);
   }
 
-  public BinarySequentialSearch(List<X> toBeMapped, long initialSize) {
-    this(toBeMapped, initialSize, (long) Math.pow(2, toBeMapped.size()));
+  public BinarySequentialSearch(List<X> toBeMapped, long initialState) {
+    this(toBeMapped, initialState, (long) Math.pow(2, toBeMapped.size()));
   }
 
-  public BinarySequentialSearch(List<X> toBeMapped, long initialSize, long max) {
+  public BinarySequentialSearch(List<X> toBeMapped, long initialState, long max) {
     this.toBeMapped = toBeMapped;
-    this.state = initialSize;
+    this.state = initialState;
     this.max = max;
 //    System.out.println("Search-Space <= " + max);
   }
@@ -31,15 +31,16 @@ public class BinarySequentialSearch<X> {
    *  reconvert binary to List<Pair<X,Y>>
    */
   public boolean hasNext() {
-    return this.state < this.max - 1;
+    return this.state < this.max;
   }
 
   public boolean[] tryNext(boolean[] toBeFilled) {
     if (!hasNext()) {
       throw new IllegalStateException("tryNext was called but no next available");
     }
+    var result = this.extractFromState(toBeFilled);
     this.state++;
-    return this.extractFromState(toBeFilled);
+    return result;
   }
 
   private boolean[] extractFromState(boolean[] toBeFilled) {
