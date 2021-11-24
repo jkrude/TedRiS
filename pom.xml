@@ -5,11 +5,17 @@
     <artifactId>QuizSolver</artifactId>
 
     <dependencies>
-        <dependency>
-            <artifactId>combinatoricslib3</artifactId>
-            <groupId>com.github.dpaukov</groupId>
-            <version>3.3.0</version>
-        </dependency>
+      <dependency>
+        <artifactId>combinatoricslib3</artifactId>
+        <groupId>com.github.dpaukov</groupId>
+        <version>3.3.0</version>
+      </dependency>
+      <dependency>
+        <artifactId>junit</artifactId>
+        <groupId>junit</groupId>
+        <scope>test</scope>
+        <version>4.12</version>
+      </dependency>
 
     </dependencies>
     <groupId>groupId</groupId>
