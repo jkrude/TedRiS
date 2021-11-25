@@ -92,7 +92,19 @@ Adding a choosing strategy to reduces the number of tried coloring-options
 - **Problem**: unbalanced load → the more edges the more instances
   - partitions should be distributed by resulting graph instances / number of edges
 
-| Iterations | Number of Graphs | P=1: Time (ms)   | P=16: Time           | SPeedup |
-| ---------- | ---------------- | ---------------- | -------------------- | ------- |
-| 10         | 270 566 472      | 17 971           | 176.24 (by 100-1000) | 78.47   |
-| 100        | 16 974 025       | 20 590 (from 3.) |                      |         |
+| Iterations | Description                | Number of Graphs | P=1: Time (ms)  | P=16: Time      | Speedup |
+| ---------- | -------------------------- | ---------------- | --------------- | --------------- | ------- |
+| 10         | c=5, k=9, step $\leq 10^7$ | $10^7$           | 14 510          | 2 671 (it =100) | 5,43    |
+| 10         | step $\leq 10^8 * 4$       | 400 000 000      | 425 344 (it =3) | 75 198          | 5,65    |
+
+#### Improving finding cycles
+
+- Use only *one* array for finding the cycle
+  - (instead of new copied array list for every added element)
+- use `inverted` parameter instead of creating an inverted new matrix
+
+| Iterations | Description          | Number of Graphs | P=1: Time (ms)  | P=16: Time           | Speedup |
+| ---------- | -------------------- | ---------------- | --------------- | :------------------- | ------- |
+| 1          | step $\leq 10^8 * 4$ | 400 000 000      | 425 344 (it =3) | 33 681 (41391 it=10) | 5,65    |
+
+- profiling is completely dominated by `hasNoCirlce::contains` (42%) and `colorGraph` (42%)

@@ -52,7 +52,6 @@ class SearchThread extends Thread {
       if (hasNoCircle(coloredGraph, false)) {
         triedColoring++;
         if (hasNoCircle(coloredGraph, true)) {
-          triedColoring++;
           this.callback.reportResult(graph, triedColoring);
           return;
         }

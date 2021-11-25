@@ -87,16 +87,18 @@ public class TimeTravelRiddle {
     if (circleLength < 3) {
       throw new IllegalArgumentException("Circle has to be of length 3 or more");
     }
-    for (int k = 3; k <= 8; ++k) {
-//        System.out.println("Testing for k= " + graphMatrix.length);
+    for (int k = 3; k <= 15; ++k) {
+      if (print) {
+        System.out.println("Testing for k= " + k);
+      }
       int searchSpace = (int) Math.pow(2, (k * k - k) / 2f);
       int sizePerP = (int) Math.ceil(searchSpace / (float) numOfProcessors);
-//      System.out.println("P = " + numOfProcessors);
-//      System.out.println("Partition size = " + sizePerP);
       SearchThread[] threads = new SearchThread[numOfProcessors];
       SearchCallback callback = new SearchCallback(threads, print);
       for (int i = 0; i < numOfProcessors; i++) {
-        threads[i] = new SearchThread(circleLength, k, i * sizePerP, searchSpace, callback);
+        int start = i * sizePerP;
+        int end = i != numOfProcessors - 1 ? (i + 1) * sizePerP : searchSpace;
+        threads[i] = new SearchThread(circleLength, k, start, end, callback);
       }
 
       for (SearchThread thread : threads) {
@@ -113,7 +115,9 @@ public class TimeTravelRiddle {
         return k;
       }
     }
-//    System.out.println("No solution found");
+    if (print) {
+      System.out.println("No solution found");
+    }
     return -1;
   }
 
@@ -136,14 +140,6 @@ public class TimeTravelRiddle {
     return toBeMapped;
   }
 
-  static boolean isValidSolution(boolean[] possibleSolution) {
-    int count = 0;
-    for (int i = 0; i < possibleSolution.length; i++) {
-      count += possibleSolution[0] ? 1 : 0;
-    }
-    return count <= (possibleSolution.length + 1) / 2;
-  }
-
   static boolean[][] colorGraph(boolean[][] currGraphMatrix,
       List<Pair<Integer, Integer>> edges) {
     for (var row : currGraphMatrix) {
@@ -158,24 +154,12 @@ public class TimeTravelRiddle {
 
   static boolean[][] colorGraph(boolean[][] currGraphMatrix, boolean[] choices,
       List<Pair<Integer, Integer>> pairs) {
-    if (choices.length != pairs.size()) {
-      throw new AssertionError();
-    }
+    assert choices.length == pairs.size();
     for (int i = 0; i < pairs.size(); i++) {
       currGraphMatrix[pairs.get(i).getX()][pairs.get(i).getY()] = choices[i];
       currGraphMatrix[pairs.get(i).getY()][pairs.get(i).getX()] = choices[i];
     }
     return currGraphMatrix;
-  }
-
-  static boolean[][] invertedGraph(boolean[][] graphMatrix) {
-    boolean[][] inverted = new boolean[graphMatrix.length][graphMatrix.length];
-    for (int i = 0; i < graphMatrix.length; i++) {
-      for (int j = 0; j < graphMatrix.length; j++) {
-        inverted[i][j] = i != j && !graphMatrix[i][j];
-      }
-    }
-    return inverted;
   }
 
   static boolean containsNoCircle(boolean[][] graphMatrix) {

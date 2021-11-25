@@ -12,7 +12,7 @@ public class SearchThreadTest {
   static final int CYCLE_LENGTH = 3;
   boolean[][] graphCycle;
   boolean[][] graphNoCycle;
-  int NoCycleEnc;
+  int noCycleEnc;
   int cycleEnc;
 
   public static void main(String[] args) {
@@ -23,49 +23,40 @@ public class SearchThreadTest {
 
   @Before
   public void setUp() {
-    graphNoCycle = new boolean[NODES][NODES];
-    graphCycle = new boolean[NODES][NODES];
-    graphNoCycle[0][1] = true;
-    graphNoCycle[1][2] = true;
-    graphNoCycle[2][3] = true;
-    graphNoCycle[3][4] = true;
-    graphNoCycle[4][0] = true;
-    graphNoCycle[0][2] = false;
-    graphNoCycle[0][3] = false;
-    graphNoCycle[1][3] = false;
-    graphNoCycle[1][4] = false;
-    graphNoCycle[2][4] = false;
-    graphNoCycle[1][0] = true;
-    graphNoCycle[2][1] = true;
-    graphNoCycle[3][2] = true;
-    graphNoCycle[4][3] = true;
-    graphNoCycle[0][4] = true;
-    graphNoCycle[2][0] = false;
-    graphNoCycle[3][0] = false;
-    graphNoCycle[3][1] = false;
-    graphNoCycle[4][1] = false;
-    graphNoCycle[4][2] = false;
-    graphNoCycle[0][0] = false;
-    graphNoCycle[1][1] = false;
-    graphNoCycle[2][2] = false;
-    graphNoCycle[3][3] = false;
-    graphNoCycle[4][4] = false;
+    graphNoCycle = new boolean[][]{
+        {false, true, false, false, true},
+        {true, false, true, false, false},
+        {false, true, false, true, false},
+        {false, false, true, false, true},
+        {true, false, false, true, false}};
+    ;
+    graphCycle = new boolean[5][5];
     for (int i = 0; i < graphNoCycle.length; i++) {
       graphCycle[i] = graphNoCycle[i].clone();
     }
     graphCycle[2][3] = false;
     graphCycle[3][2] = false;
 
-    NoCycleEnc = 613;
-    cycleEnc = 609;
+    noCycleEnc = simulateEncoding(graphNoCycle);
+    cycleEnc = simulateEncoding(graphCycle);
 
     assertPremise(graphCycle, cycleEnc);
-    assertPremise(graphNoCycle, NoCycleEnc);
+    assertPremise(graphNoCycle, noCycleEnc);
+
 
   }
 
+  private int simulateEncoding(boolean[][] graph) {
+    return TimeTravelRiddle.toBeMapped(graph.length).stream()
+        .map(pair -> graph[pair.getX()][pair.getY()])
+        .map(b -> b ? "1" : "0")
+        .reduce((s1, s2) -> s1 + s2)
+        .map(bString -> Integer.parseInt(bString, 2))
+        .orElseThrow();
+  }
+
   private void assertPremise(boolean[][] graph, int enc) {
-    var shouldToBeMapped = TimeTravelRiddle.toBeMapped(NODES);
+    var shouldToBeMapped = TimeTravelRiddle.toBeMapped(graph.length);
     var search = new BinarySequentialSearch<>(shouldToBeMapped, enc, enc + 1);
     var result = search.tryNext(new boolean[shouldToBeMapped.size()]);
     for (int i = 0; i < result.length; i++) {
@@ -77,9 +68,16 @@ public class SearchThreadTest {
   @Test
   public void run() {
     // Graph without cycle
-    Assert.assertFalse(threadFoundOnlyCycle(this.NoCycleEnc, this.NoCycleEnc + 1));
+    Assert.assertFalse(threadFoundOnlyCycle(this.noCycleEnc, this.noCycleEnc + 1));
     // Graph with cycle
     Assert.assertTrue(threadFoundOnlyCycle(this.cycleEnc, this.cycleEnc + 1));
+  }
+
+  void printEdges(boolean[][] graph) {
+    // Use https://csacademy.com/app/graph_editor/ for a quick overview
+    TimeTravelRiddle.toBeMapped(graph.length).stream()
+        .filter(pair -> graph[pair.getX()][pair.getY()])
+        .forEach(pair -> System.out.println(pair.getX() + " " + pair.getY()));
   }
 
   boolean threadFoundOnlyCycle(int start, int end) {
