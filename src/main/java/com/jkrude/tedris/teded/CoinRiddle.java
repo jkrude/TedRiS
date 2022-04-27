@@ -1,11 +1,11 @@
-package teded;
+package com.jkrude.tedris.teded;
 
+import com.jkrude.tedris.util.Pair;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiPredicate;
-import util.Pair;
 
 public class CoinRiddle {
 

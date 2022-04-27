@@ -1,6 +1,6 @@
-package scaleChallengeHard;
+package com.jkrude.tedris.scaleChallengeHard;
 
-import core.SearchTree;
+import com.jkrude.tedris.core.SearchTree;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -89,23 +89,23 @@ class Scale {
         Right, Left, Discard
     }
 
-    static class ChoicesForMasses implements core.ChoosingStrategy<Integer, Choice> {
+  static class ChoicesForMasses implements com.jkrude.tedris.core.ChoosingStrategy<Integer, Choice> {
 
-        @Override
-        public Queue<Choice> sortedOptionsForY(
-            Integer curr,
-            List<Entry<Integer, Choice>> alreadyMapped,
-            Queue<Integer> toBeMapped) {
+    @Override
+    public Queue<Choice> sortedOptionsForY(
+        Integer curr,
+        List<Entry<Integer, Choice>> alreadyMapped,
+        Queue<Integer> toBeMapped) {
 
-            Deque<Choice> options = new ArrayDeque<>();
+      Deque<Choice> options = new ArrayDeque<>();
 
-            List<List<Integer>> interMapping = interpretMapping(alreadyMapped);
-            int leftSum = total(interMapping.get(0));
-            int rightSum = total(interMapping.get(1));
-            int leftOverSum = total(new ArrayList<>(toBeMapped));
-            if (leftSum == rightSum) {
-                return new ArrayDeque<>(Collections.singleton(Choice.Discard));
-            } else {
+      List<List<Integer>> interMapping = interpretMapping(alreadyMapped);
+      int leftSum = total(interMapping.get(0));
+      int rightSum = total(interMapping.get(1));
+      int leftOverSum = total(new ArrayList<>(toBeMapped));
+      if (leftSum == rightSum) {
+        return new ArrayDeque<>(Collections.singleton(Choice.Discard));
+      } else {
                 if ((leftSum > rightSum) && ((rightSum + curr) <= (leftSum + leftOverSum))) {
                     options.addFirst(Choice.Right);
                 } else if ((leftSum + curr) <= (rightSum + leftOverSum)) {

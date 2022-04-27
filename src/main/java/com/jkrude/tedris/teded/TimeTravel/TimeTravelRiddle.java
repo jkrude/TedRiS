@@ -1,10 +1,10 @@
-package teded.TimeTravel;
+package com.jkrude.tedris.teded.TimeTravel;
 
+import com.jkrude.tedris.util.Pair;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.paukov.combinatorics3.Generator;
-import util.Pair;
 
 @SuppressWarnings("SameParameterValue")
 public class TimeTravelRiddle {
@@ -18,9 +18,9 @@ public class TimeTravelRiddle {
    * Only one solution
    *
    * 1. The graph is fully connected.
-   * 2. The graph is bi-colored.
+   * 2. The edges of the graph are bi-colored.
    * 3. The color of an edge is random.
-   * 4. Th graph needs to have a circle of size 3 were every edge has the same color
+   * 4. The graph needs to have a circle of size 3 were every edge has the same color
    *
    * 1. Generate fully connected graph with k vertices
    * 2. Create every possible coloring
@@ -87,17 +87,20 @@ public class TimeTravelRiddle {
     if (circleLength < 3) {
       throw new IllegalArgumentException("Circle has to be of length 3 or more");
     }
-    for (int k = 3; k <= 15; ++k) {
+    for (int k = 3; k <= 10; ++k) {
+      long searchSpace = (long) (Math.pow(2, (k * (k - 1)) / 2f) / 2f);
+      long sizePerP = (long) Math.ceil(searchSpace / (float) numOfProcessors);
       if (print) {
         System.out.println("Testing for k= " + k);
+        System.out.println("Maximum search space: " + searchSpace);
+        System.out.println("Using " + numOfProcessors + " threads.");
+        System.out.println("Search space per process: " + sizePerP);
       }
-      int searchSpace = (int) Math.pow(2, (k * k - k) / 2f);
-      int sizePerP = (int) Math.ceil(searchSpace / (float) numOfProcessors);
       SearchThread[] threads = new SearchThread[numOfProcessors];
       SearchCallback callback = new SearchCallback(threads, print);
       for (int i = 0; i < numOfProcessors; i++) {
-        int start = i * sizePerP;
-        int end = i != numOfProcessors - 1 ? (i + 1) * sizePerP : searchSpace;
+        long start = i * sizePerP;
+        long end = i != numOfProcessors - 1 ? (i + 1) * sizePerP : searchSpace;
         threads[i] = new SearchThread(circleLength, k, start, end, callback);
       }
 

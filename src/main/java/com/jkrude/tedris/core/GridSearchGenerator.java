@@ -1,11 +1,11 @@
-package core;
+package com.jkrude.tedris.core;
 
+import com.jkrude.tedris.util.CyclicIterator;
+import com.jkrude.tedris.util.LazyGenerator;
+import com.jkrude.tedris.util.Pair;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiPredicate;
-import util.CyclicIterator;
-import util.LazyGenerator;
-import util.Pair;
 
 public class GridSearchGenerator<T> {
 

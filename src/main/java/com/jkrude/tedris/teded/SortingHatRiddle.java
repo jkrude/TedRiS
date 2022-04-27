@@ -1,8 +1,8 @@
-package teded;
+package com.jkrude.tedris.teded;
 
-import core.ChoosingStrategy;
-import core.Constraint;
-import core.SearchTree;
+import com.jkrude.tedris.core.ChoosingStrategy;
+import com.jkrude.tedris.core.Constraint;
+import com.jkrude.tedris.core.SearchTree;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collections;

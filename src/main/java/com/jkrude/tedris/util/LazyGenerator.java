@@ -1,4 +1,4 @@
-package util;
+package com.jkrude.tedris.util;
 
 import java.util.NoSuchElementException;
 import java.util.function.Function;

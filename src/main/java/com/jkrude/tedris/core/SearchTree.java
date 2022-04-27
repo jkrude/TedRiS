@@ -1,4 +1,4 @@
-package core;
+package com.jkrude.tedris.core;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayDeque;

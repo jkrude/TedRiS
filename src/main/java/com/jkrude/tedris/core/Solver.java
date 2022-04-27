@@ -1,12 +1,12 @@
-//package core;
+//package com.jkrude.tedris.core;
 //
-//import java.util.ArrayDeque;
-//import java.util.ArrayList;
-//import java.util.Collection;
-//import java.util.HashSet;
-//import java.util.List;
-//import java.util.Map;
-//import java.util.Optional;
+//import java.com.jkrude.tedris.util.ArrayDeque;
+//import java.com.jkrude.tedris.util.ArrayList;
+//import java.com.jkrude.tedris.util.Collection;
+//import java.com.jkrude.tedris.util.HashSet;
+//import java.com.jkrude.tedris.util.List;
+//import java.com.jkrude.tedris.util.Map;
+//import java.com.jkrude.tedris.util.Optional;
 //
 //public class Solver<X, Y> {
 //

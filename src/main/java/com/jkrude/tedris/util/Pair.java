@@ -1,4 +1,4 @@
-package util;
+package com.jkrude.tedris.util;
 
 public class Pair<X, Y> {
 

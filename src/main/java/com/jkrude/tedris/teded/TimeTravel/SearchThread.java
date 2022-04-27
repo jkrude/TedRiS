@@ -1,24 +1,24 @@
-package teded.TimeTravel;
+package com.jkrude.tedris.teded.TimeTravel;
 
-import static teded.TimeTravel.TimeTravelRiddle.colorGraph;
-import static teded.TimeTravel.TimeTravelRiddle.createMatrixOfSize;
-import static teded.TimeTravel.TimeTravelRiddle.toBeMapped;
+import static com.jkrude.tedris.teded.TimeTravel.TimeTravelRiddle.colorGraph;
+import static com.jkrude.tedris.teded.TimeTravel.TimeTravelRiddle.createMatrixOfSize;
+import static com.jkrude.tedris.teded.TimeTravel.TimeTravelRiddle.toBeMapped;
 
-import core.BinarySequentialSearch;
+import com.jkrude.tedris.core.BinarySequentialSearch;
+import com.jkrude.tedris.teded.TimeTravel.TimeTravelRiddle.SearchCallback;
+import com.jkrude.tedris.util.Pair;
 import java.util.List;
-import teded.TimeTravel.TimeTravelRiddle.SearchCallback;
-import util.Pair;
 
 
 class SearchThread extends Thread {
 
   private final int CYCLE_LENGTH;
   private final boolean[][] graph;
-  private final int initialState;
-  private final int max;
+  private final long initialState;
+  private final long max;
   private final SearchCallback callback;
 
-  public SearchThread(int cycleLength, int numNode, int initialState, int max,
+  public SearchThread(int cycleLength, int numNode, long initialState, long max,
       SearchCallback callback) {
     this.CYCLE_LENGTH = cycleLength;
     this.max = max;
@@ -55,6 +55,9 @@ class SearchThread extends Thread {
           this.callback.reportResult(graph, triedColoring);
           return;
         }
+      }
+      if (triedColoring % 5e8 == 0) {
+        System.out.println("Checked " + triedColoring + " possibilities");
       }
     }
     if (!isInterrupted()) {

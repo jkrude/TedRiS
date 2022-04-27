@@ -1,10 +1,10 @@
-package teded.TimeTravel;
+package com.jkrude.tedris.teded.TimeTravel;
 
-import core.BinarySequentialSearch;
+import com.jkrude.tedris.core.BinarySequentialSearch;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import teded.TimeTravel.TimeTravelRiddle.SearchCallback;
+import com.jkrude.tedris.teded.TimeTravel.TimeTravelRiddle.SearchCallback;
 
 public class SearchThreadTest {
 

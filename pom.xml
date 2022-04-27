@@ -2,31 +2,31 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns="http://maven.apache.org/POM/4.0.0"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <artifactId>QuizSolver</artifactId>
 
-    <dependencies>
-      <dependency>
-        <artifactId>combinatoricslib3</artifactId>
-        <groupId>com.github.dpaukov</groupId>
-        <version>3.3.0</version>
-      </dependency>
-      <dependency>
-        <artifactId>junit</artifactId>
-        <groupId>junit</groupId>
-        <scope>test</scope>
-        <version>4.12</version>
-      </dependency>
+  <artifactId>TedRis</artifactId>
+  <dependencies>
+    <dependency>
+      <artifactId>combinatoricslib3</artifactId>
+      <groupId>com.github.dpaukov</groupId>
+      <version>3.3.3</version>
+    </dependency>
+    <dependency>
+      <artifactId>junit</artifactId>
+      <groupId>junit</groupId>
+      <scope>test</scope>
+      <version>4.13.2</version>
+    </dependency>
 
-    </dependencies>
-    <groupId>groupId</groupId>
-    <modelVersion>4.0.0</modelVersion>
+  </dependencies>
+  <groupId>com.jkrude.tedris</groupId>
+  <modelVersion>4.0.0</modelVersion>
+  <properties>
+    <kotlin.version>1.6.20-M1</kotlin.version>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+  </properties>
 
-    <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-    </properties>
-
-    <version>1.0-SNAPSHOT</version>
+  <version>1.0</version>
 
 
 </project>

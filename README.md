@@ -2,7 +2,6 @@
 
 Guarantees more time programming it than solving the problem by hand!
 
-
 Finding solutions programmatically, finding similarities and having a look at the complexity and possible optimisations.
  And all while abusing an object-oriented-language for something it was never intended to be.
 
@@ -14,13 +13,15 @@ Searching a mapping *X → Y* under defined rules/constraints.
 The generator avoids exponential space through a lazy evaluation of the search tree.
 
 #### "GridSearch"
-Finding a tuple of parameters which fulfill the problem.
-→ The parameters have no obvious decency's and an improvement between parameters cant be computed,
- so pure systematic try and error seems the only options.
-
+Finding a tuple of parameters which fulfill the problem. → The parameters have no obvious decency's and an improvement
+between parameters cant be computed, so pure systematic try and error seems the only options.
 
 #### Currently solved:
 
 - [Hat riddle](https://www.youtube.com/watch?v=auhrB0bSTEo)
 - [Dark-Coin](https://www.youtube.com/watch?v=pnSw8g3DPHw&list=PLJicmE8fK0EiFRt1Hm5a_7SJFaikIFW30&index=22)
 - [Time Travel](https://www.youtube.com/watch?v=ukUPojrPFPA&list=PLJicmE8fK0EiFRt1Hm5a_7SJFaikIFW30&index=33)
+
+## Main work in Time Travel
+
+- see [here](src/main/java/com/jkrude/tedris/teded/TimeTravel/TimeTravelOpt.md) for more.
