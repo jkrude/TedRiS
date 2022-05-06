@@ -89,7 +89,7 @@ class Scale {
         Right, Left, Discard
     }
 
-  static class ChoicesForMasses implements com.jkrude.tedris.core.ChoosingStrategy<Integer, Choice> {
+    static class ChoicesForMasses implements com.jkrude.tedris.core.ChoosingStrategy<Integer, Choice> {
 
     @Override
     public Queue<Choice> sortedOptionsForY(

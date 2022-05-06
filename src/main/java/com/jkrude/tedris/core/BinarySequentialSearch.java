@@ -24,6 +24,10 @@ public class BinarySequentialSearch<X> {
 //    System.out.println("Search-Space <= " + max);
   }
 
+  public long getState() {
+    return this.state;
+  }
+
   /*
    * Instance run(){
    *  map toBeMapped to binary
